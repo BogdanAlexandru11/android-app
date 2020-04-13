@@ -24,6 +24,8 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -45,6 +47,9 @@ import androidx.core.app.ActivityCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * The only activity in this sample.
@@ -101,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
 
+    CountDownTimer cTimer = null;
+
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -130,8 +137,8 @@ public class MainActivity extends AppCompatActivity implements
                 requestPermissions();
             }
         }
-        findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
-        findViewById(R.id.free).setVisibility(View.VISIBLE);
+        findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
+        findViewById(R.id.free).setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -288,10 +295,31 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             if (location != null) {
-                Toast.makeText(MainActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();
+                Log.d("alert",location.toString());
+                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
+                cancelTimer();
+                startTimer();
             }
         }
+
+        void startTimer() {
+            cTimer = new CountDownTimer(6000, 1000) {
+                public void onTick(long millisUntilFinished) {
+                    findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
+                }
+                public void onFinish() {
+                    findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
+                }
+            };
+            cTimer.start();
+        }
+
+        //cancel timer
+        void cancelTimer() {
+            if(cTimer!=null)
+                cTimer.cancel();
+        }
+
     }
 
     @Override
