@@ -43,6 +43,11 @@
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="location" />
+
+        <service
+            android:name=".FloatingWidgetShowService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

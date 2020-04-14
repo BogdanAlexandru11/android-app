@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
@@ -46,6 +47,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Timer;
@@ -93,6 +95,9 @@ public class MainActivity extends AppCompatActivity implements
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
+    public static final int SYSTEM_ALERT_WINDOW_PERMISSION = 7;
+
+
     // The BroadcastReceiver used to listen from broadcasts from the service.
     private MyReceiver myReceiver;
 
@@ -107,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements
     private Button mRemoveLocationUpdatesButton;
 
     CountDownTimer cTimer = null;
+    Button button ;
+
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -139,6 +146,41 @@ public class MainActivity extends AppCompatActivity implements
         }
         findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
         findViewById(R.id.free).setVisibility(View.INVISIBLE);
+
+        button = (Button) findViewById(R.id.buttonShow);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+
+            RuntimePermissionForUser();
+        }
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    Log.d("alert","in if");
+
+                    startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
+
+                    finish();
+
+                } else if (Settings.canDrawOverlays(MainActivity.this)) {
+                    Log.d("alert","in else if");
+
+                    startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
+
+                    finish();
+
+                } else {
+                    Log.d("alert","in else");
+                    RuntimePermissionForUser();
+
+                    Toast.makeText(MainActivity.this, "System Alert Window Permission Is Required For Floating Widget.", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
     }
 
     @Override
@@ -339,5 +381,13 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(true);
             mRemoveLocationUpdatesButton.setEnabled(false);
         }
+    }
+
+    public void RuntimePermissionForUser() {
+
+        Intent PermissionIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName()));
+
+        startActivityForResult(PermissionIntent, SYSTEM_ALERT_WINDOW_PERMISSION);
     }
 }
