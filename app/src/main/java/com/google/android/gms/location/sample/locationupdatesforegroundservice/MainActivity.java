@@ -27,7 +27,6 @@ import android.location.Location;
 import android.media.Image;
 import android.os.Build;
 import android.os.CountDownTimer;
-import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -47,14 +46,14 @@ import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.ActivityCompat;
 
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * The only activity in this sample.
@@ -95,7 +94,8 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
+//    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
+    FloatingWidgetShowService test = new FloatingWidgetShowService();
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
+    private ImageView vg;
 
     CountDownTimer cTimer = null;
     Button button ;
@@ -144,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
 
         IntentFilter filter= new IntentFilter("com.codingflow.EXAMPLE_ACTION");
-        registerReceiver(exampleBroadcastReceiver,filter);
+        registerReceiver(test.reciever,filter);
 
         // Check that the user hasn't revoked permissions by going to Settings.
         if (Utils.requestingLocationUpdates(this)) {
@@ -360,12 +361,10 @@ public class MainActivity extends AppCompatActivity implements
                 public void onTick(long millisUntilFinished) {
 //                    change here the image
                     try{
-                        findViewById(R.id.van).setVisibility(View.VISIBLE);
-//                        ImageView imageView = (ImageView) findViewById(R.id.van);
-//                        Log.d("alert","imageview "+imageView.toString());
+//                        set here the view
                     }
                     catch (Exception e){
-//                        Log.d("alert","van is null");
+                        Log.d("alert","error in main method");
                     }
                     findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
                 }

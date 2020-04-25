@@ -4,8 +4,6 @@ package com.google.android.gms.location.sample.locationupdatesforegroundservice;
  * Created by Juned on 9/15/2017.
  */
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,14 +17,14 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.ImageView;
 
 import java.util.Objects;
 
 
-public class FloatingWidgetShowService extends Service{
+public class FloatingWidgetShowService extends Service {
 
+    private static FloatingWidgetShowService sInstance;
 
     WindowManager windowManager;
     View floatingView, collapsedView;
@@ -86,27 +84,25 @@ public class FloatingWidgetShowService extends Service{
 
     }
 
+    public BroadcastReceiver reciever = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("alerttttttttttttttttt", Objects.requireNonNull(intent.getStringExtra("valueForFloatingWidget")));
+//            wifiIcon.setVisibility( isWifiEnabled ? View.VISIBLE : View.GONE);
+//            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
+            View view = View.inflate(context, R.layout.activity_main, null);
+            view.findViewById(R.id.free).setVisibility(View.VISIBLE);
+
+            // do all the checking
+            // interact with image and text
+//            speedVanIcon.setVisibility(View.VISIBLE);
+
+        }
+    };
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (floatingView != null) windowManager.removeView(floatingView);
-    }
-
-    public static class ExampleBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("alerttttttttttttttttt", Objects.requireNonNull(intent.getStringExtra("valueForFloatingWidget")));
-            View view = View.inflate(context, R.layout.floating_widget_layout, null);
-//            Log.d("alert","view is "+);
-            try{
-//                view.findViewById(R.id.van).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.speedvan).setVisibility(View.GONE);
-
-            }
-            catch (Exception e){
-                Log.d("alert","error setting the view");
-            }
-        }
-
     }
 }
