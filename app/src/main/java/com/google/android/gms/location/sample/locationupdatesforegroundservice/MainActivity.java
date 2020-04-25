@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.media.Image;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -32,6 +33,7 @@ import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import android.Manifest;
@@ -50,6 +52,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -91,6 +94,8 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -138,6 +143,9 @@ public class MainActivity extends AppCompatActivity implements
         myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
 
+        IntentFilter filter= new IntentFilter("com.codingflow.EXAMPLE_ACTION");
+        registerReceiver(exampleBroadcastReceiver,filter);
+
         // Check that the user hasn't revoked permissions by going to Settings.
         if (Utils.requestingLocationUpdates(this)) {
             if (!checkPermissions()) {
@@ -163,14 +171,14 @@ public class MainActivity extends AppCompatActivity implements
 
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
 
-                    finish();
+//                    finish();
 
                 } else if (Settings.canDrawOverlays(MainActivity.this)) {
                     Log.d("alert","in else if");
 
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
 
-                    finish();
+//                    finish();
 
                 } else {
                     Log.d("alert","in else");
@@ -339,6 +347,9 @@ public class MainActivity extends AppCompatActivity implements
             if (location != null) {
                 Log.d("alert",location.toString());
                 Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
+                Intent myIntent= new Intent("com.codingflow.EXAMPLE_ACTION");
+                myIntent.putExtra("valueForFloatingWidget","carInSpeedVanZone");
+                sendBroadcast(myIntent);
                 cancelTimer();
                 startTimer();
             }
@@ -347,6 +358,15 @@ public class MainActivity extends AppCompatActivity implements
         void startTimer() {
             cTimer = new CountDownTimer(6000, 1000) {
                 public void onTick(long millisUntilFinished) {
+//                    change here the image
+                    try{
+                        findViewById(R.id.van).setVisibility(View.VISIBLE);
+//                        ImageView imageView = (ImageView) findViewById(R.id.van);
+//                        Log.d("alert","imageview "+imageView.toString());
+                    }
+                    catch (Exception e){
+//                        Log.d("alert","van is null");
+                    }
                     findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
                 }
                 public void onFinish() {
@@ -389,5 +409,23 @@ public class MainActivity extends AppCompatActivity implements
                 Uri.parse("package:" + getPackageName()));
 
         startActivityForResult(PermissionIntent, SYSTEM_ALERT_WINDOW_PERMISSION);
+    }
+
+    public static String getUserCountry(Context context) {
+        try {
+            final TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            final String simCountry = tm.getSimCountryIso();
+            if (simCountry != null && simCountry.length() == 2) { // SIM country code is available
+                return simCountry.toLowerCase(Locale.US);
+            }
+            else if (tm.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) { // device is not 3G (would be unreliable)
+                String networkCountry = tm.getNetworkCountryIso();
+                if (networkCountry != null && networkCountry.length() == 2) { // network country code is available
+                    return networkCountry.toLowerCase(Locale.US);
+                }
+            }
+        }
+        catch (Exception e) { }
+        return null;
     }
 }

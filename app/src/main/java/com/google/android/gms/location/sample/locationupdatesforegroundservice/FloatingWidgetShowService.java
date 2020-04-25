@@ -4,14 +4,25 @@ package com.google.android.gms.location.sample.locationupdatesforegroundservice;
  * Created by Juned on 9/15/2017.
  */
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.location.Location;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.Objects;
 
 
 public class FloatingWidgetShowService extends Service{
@@ -20,7 +31,6 @@ public class FloatingWidgetShowService extends Service{
     WindowManager windowManager;
     View floatingView, collapsedView;
     WindowManager.LayoutParams params ;
-
     public FloatingWidgetShowService() {
     }
 
@@ -33,7 +43,6 @@ public class FloatingWidgetShowService extends Service{
     @Override
     public void onCreate() {
         super.onCreate();
-
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget_layout, null);
 
         params = new WindowManager.LayoutParams(
@@ -74,6 +83,7 @@ public class FloatingWidgetShowService extends Service{
                 return false;
             }
         });
+
     }
 
     @Override
@@ -82,4 +92,21 @@ public class FloatingWidgetShowService extends Service{
         if (floatingView != null) windowManager.removeView(floatingView);
     }
 
+    public static class ExampleBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("alerttttttttttttttttt", Objects.requireNonNull(intent.getStringExtra("valueForFloatingWidget")));
+            View view = View.inflate(context, R.layout.floating_widget_layout, null);
+//            Log.d("alert","view is "+);
+            try{
+//                view.findViewById(R.id.van).setVisibility(View.VISIBLE);
+                view.findViewById(R.id.speedvan).setVisibility(View.GONE);
+
+            }
+            catch (Exception e){
+                Log.d("alert","error setting the view");
+            }
+        }
+
+    }
 }

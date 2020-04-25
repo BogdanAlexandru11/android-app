@@ -30,6 +30,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -131,6 +132,8 @@ public class LocationUpdatesService extends Service{
      * Callback for changes in location.
      */
     private LocationCallback mLocationCallback;
+
+    private String country;
 
     private Handler mServiceHandler;
     private ArrayList<List<LatLng>> carlowLocations = new ArrayList<>();
@@ -4319,7 +4322,13 @@ public class LocationUpdatesService extends Service{
         List<Address> addresses;
         try{
             addresses = geocoder.getFromLocation(latitude, longitude, 1);
-            return addresses.get(0).getAdminArea().substring(7).toLowerCase();
+            if (addresses.get(0).getCountryName() != "Ireland"){
+                return addresses.get(0).getAdminArea().substring(7).toLowerCase();
+            }
+            else{
+                return null;
+
+            }
         }
         catch (Exception e){
             Log.i("error",e.toString());

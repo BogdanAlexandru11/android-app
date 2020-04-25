@@ -31,6 +31,13 @@
                 android:layout_height="23dp"
                 android:layout_marginLeft="50dp"
                 android:src="@drawable/close_icon" />
+            <ImageView
+                android:id="@+id/van"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginTop="10dp"
+                android:visibility="invisible"
+                android:src="@drawable/van" />
         </RelativeLayout>
     </RelativeLayout>
 </FrameLayout>
