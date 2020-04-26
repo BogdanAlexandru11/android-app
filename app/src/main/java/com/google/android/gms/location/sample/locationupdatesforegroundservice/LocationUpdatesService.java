@@ -163,15 +163,6 @@ public class LocationUpdatesService extends Service{
     private ArrayList<List<LatLng>> wexfordLocations = new ArrayList<>();
     private ArrayList<List<LatLng>> wicklowLocations = new ArrayList<>();
 
-
-
-
-
-
-
-
-
-
     Map<String, ArrayList<List<LatLng>>> map = new HashMap<String, ArrayList<List<LatLng>>>();
 
 
@@ -4102,8 +4093,7 @@ public class LocationUpdatesService extends Service{
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Service started");
-        boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,
-                false);
+        boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false);
 
         // We got here because the user decided to remove location updates from the notification.
         if (startedFromNotification) {
@@ -4255,15 +4245,14 @@ public class LocationUpdatesService extends Service{
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
         Log.i(TAG, "New location: " + location);
-        LatLng mypoint = new LatLng( Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
+        LatLng currentLocation = new LatLng( Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
         String county = getCounty(location.getLatitude(), location.getLongitude());
-        Log.i("alert","county is: "+county);
         for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
             if(entry.getKey().equalsIgnoreCase(county)){
                 entry.getValue().stream().parallel().forEach(obj -> {
-                    boolean isonPath = PolyUtil.isLocationOnPath(mypoint, obj, true, 100);
+                    boolean isonPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 100);
                     if (isonPath) {
-                        Log.i("alert","This location is in a speedvan zone");
+                        Log.i(TAG,"This location is in a speedvan zone");
                         Intent intent = new Intent(ACTION_BROADCAST);
                         intent.putExtra(EXTRA_LOCATION, location);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
@@ -4331,7 +4320,7 @@ public class LocationUpdatesService extends Service{
             }
         }
         catch (Exception e){
-            Log.i("error",e.toString());
+            Log.i(TAG,e.toString());
            return null;
         }
     }

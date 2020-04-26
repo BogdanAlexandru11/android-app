@@ -13,6 +13,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,6 +31,9 @@ public class FloatingWidgetShowService extends Service {
     Context context;
     private static String myString;
     CountDownTimer cTimer = null;
+    private static final String TAG = FloatingWidgetShowService.class.getSimpleName();
+    private static boolean alreadyStarted=false;
+
 
     public Handler mHandler;
     public FloatingWidgetShowService(Context context) {
@@ -88,45 +92,57 @@ public class FloatingWidgetShowService extends Service {
                 return false;
             }
         });
-        Timer timer = new Timer();
         Handler handler = new Handler(Looper.getMainLooper());
+        Timer timer = new Timer();
         timer.schedule(new TimerTask()
         {
             @Override
             public void run()
             {
                 handler.postDelayed(() -> {
-                    if(myString!=null){
-                        cTimer = new CountDownTimer(6000, 1000) {
-                            public void onTick(long millisUntilFinished) {
-                                floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
-                                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
-
-                            }
-                            public void onFinish() {
-                                floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
-                                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
-                                myString=null;
-                            }
-                        }.start();
+                    if(myString!=null && !alreadyStarted){
+                        cancelTimer();
+                        startTimer(floatingView);
                     }
-                    else {
-                        floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
-                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
-                    }
-
-                }, 1000 );
+                }, 0 );
             }
-        }, 0, 2000);
+        }, 0, 1000);
+    }
 
+    void startTimer(View view) {
+        cTimer = new CountDownTimer(6000, 1000) {
+            public void onTick(long millisUntilFinished) {
+            floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
+            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
+            alreadyStarted=true;
 
+            }
+            public void onFinish() {
+            floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
+            alreadyStarted=false;
+            }
+        };
+        cTimer.start();
+    }
 
+    //cancel timer
+    void cancelTimer() {
+        if(cTimer!=null){
+            floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
+            cTimer.cancel();
+        }
     }
 
     public BroadcastReceiver reciever = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
             myString = intent.getStringExtra("valueForFloatingWidget");
+            Log.d(TAG, myString);
+            if(myString.equalsIgnoreCase("null")){
+                myString=null;
+            }
         }
     };
 

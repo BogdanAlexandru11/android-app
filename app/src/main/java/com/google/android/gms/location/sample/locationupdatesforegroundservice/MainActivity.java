@@ -42,6 +42,7 @@ import android.net.Uri;
 
 import android.provider.Settings;
 import androidx.annotation.NonNull;
+
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.ActivityCompat;
 
@@ -50,7 +51,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The only activity in this sample.
@@ -117,6 +123,11 @@ public class MainActivity extends AppCompatActivity implements
     CountDownTimer cTimer = null;
     Button button ;
 
+    Map<String, String> map = new HashMap<String, String>();
+
+    public long lastUpdatedAt;
+
+
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -164,28 +175,17 @@ public class MainActivity extends AppCompatActivity implements
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    Log.d("alert","in if");
-
+                    Log.d(TAG,"in if");
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
-
-//                    finish();
-
                 } else if (Settings.canDrawOverlays(MainActivity.this)) {
-                    Log.d("alert","in else if");
-
+                    Log.d(TAG,"in else if");
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
-
-//                    finish();
-
                 } else {
-                    Log.d("alert","in else");
+                    Log.d(TAG,"in else");
                     RuntimePermissionForUser();
-
                     Toast.makeText(MainActivity.this, "System Alert Window Permission Is Required For Floating Widget.", Toast.LENGTH_LONG).show();
                 }
-
             }
         });
     }
@@ -343,34 +343,58 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            Intent myIntent= new Intent("com.codingflow.EXAMPLE_ACTION");
+
             if (location != null) {
-                Log.d("alert",location.toString());
-                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
-                Intent myIntent= new Intent("com.codingflow.EXAMPLE_ACTION");
-                myIntent.putExtra("valueForFloatingWidget","carInSpeedVanZone");
-                sendBroadcast(myIntent);
-                cancelTimer();
-                startTimer();
+                if(hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())){
+                    myIntent.putExtra("valueForFloatingWidget","carInSpeedVanZone");
+                    sendBroadcast(myIntent);
+                    lastUpdatedAt = System.currentTimeMillis();
+                }
+                else{
+                    myIntent.putExtra("valueForFloatingWidget","null");
+                    sendBroadcast(myIntent);
+                    lastUpdatedAt = System.currentTimeMillis();
+                }
+
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask()
+               {
+                   @Override
+                   public void run()
+                   {
+                       if(!hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())){
+                           myIntent.putExtra("valueForFloatingWidget","null");
+                           sendBroadcast(myIntent);
+                   }
+                   }
+               },0,2000);
+
+//                Log.d(TAG,location.toString());
+//                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
+
+//                cancelTimer();
+//                startTimer();
             }
         }
 
-        void startTimer() {
-            cTimer = new CountDownTimer(6000, 1000) {
-                public void onTick(long millisUntilFinished) {
-                    findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
-                }
-                public void onFinish() {
-                    findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
-                }
-            };
-            cTimer.start();
-        }
-
-        //cancel timer
-        void cancelTimer() {
-            if(cTimer!=null)
-                cTimer.cancel();
-        }
+//        void startTimer() {
+//            cTimer = new CountDownTimer(6000, 1000) {
+//                public void onTick(long millisUntilFinished) {
+//                    findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
+//                }
+//                public void onFinish() {
+//                    findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
+//                }
+//            };
+//            cTimer.start();
+//        }
+//
+//        //cancel timer
+//        void cancelTimer() {
+//            if(cTimer!=null)
+//                cTimer.cancel();
+//        }
 
     }
 
@@ -417,5 +441,9 @@ public class MainActivity extends AppCompatActivity implements
         }
         catch (Exception e) { }
         return null;
+    }
+
+    public boolean hasVariableBeenUpdatedInTheLastFewSeconds(long lastUpdatedAt, long currentTimeInMs){
+        return TimeUnit.MILLISECONDS.toSeconds(currentTimeInMs-lastUpdatedAt) <= 5;
     }
 }
