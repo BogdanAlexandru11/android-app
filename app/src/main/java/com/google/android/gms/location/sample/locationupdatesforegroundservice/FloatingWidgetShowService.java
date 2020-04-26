@@ -9,27 +9,34 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.location.Location;
-import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
 
-import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class FloatingWidgetShowService extends Service {
 
-    private static FloatingWidgetShowService sInstance;
-
     WindowManager windowManager;
     View floatingView, collapsedView;
     WindowManager.LayoutParams params ;
-    public FloatingWidgetShowService() {
+    Context context;
+    private static String myString;
+    CountDownTimer cTimer = null;
+
+    public Handler mHandler;
+    public FloatingWidgetShowService(Context context) {
+        this.context=context;
+    }
+
+    public FloatingWidgetShowService (){
     }
 
     @Override
@@ -81,22 +88,45 @@ public class FloatingWidgetShowService extends Service {
                 return false;
             }
         });
+        Timer timer = new Timer();
+        Handler handler = new Handler(Looper.getMainLooper());
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                handler.postDelayed(() -> {
+                    if(myString!=null){
+                        cTimer = new CountDownTimer(6000, 1000) {
+                            public void onTick(long millisUntilFinished) {
+                                floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
+                                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
+
+                            }
+                            public void onFinish() {
+                                floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+                                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
+                                myString=null;
+                            }
+                        }.start();
+                    }
+                    else {
+                        floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
+                    }
+
+                }, 1000 );
+            }
+        }, 0, 2000);
+
+
 
     }
 
     public BroadcastReceiver reciever = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("alerttttttttttttttttt", Objects.requireNonNull(intent.getStringExtra("valueForFloatingWidget")));
-//            wifiIcon.setVisibility( isWifiEnabled ? View.VISIBLE : View.GONE);
-//            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
-            View view = View.inflate(context, R.layout.activity_main, null);
-            view.findViewById(R.id.free).setVisibility(View.VISIBLE);
-
-            // do all the checking
-            // interact with image and text
-//            speedVanIcon.setVisibility(View.VISIBLE);
-
+            myString = intent.getStringExtra("valueForFloatingWidget");
         }
     };
 

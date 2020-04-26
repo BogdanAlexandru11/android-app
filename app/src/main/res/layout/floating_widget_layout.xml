@@ -23,7 +23,7 @@
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:layout_marginTop="10dp"
-                android:src="@drawable/mobile_icon" />
+                android:src="@drawable/free" />
 
             <ImageView
                 android:id="@+id/Widget_Close_Icon"

@@ -24,7 +24,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.media.Image;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
@@ -46,9 +45,7 @@ import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.ActivityCompat;
 
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -95,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG = MainActivity.class.getSimpleName();
 
 //    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
-    FloatingWidgetShowService test = new FloatingWidgetShowService();
+    FloatingWidgetShowService test = new FloatingWidgetShowService((Context) this);
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -162,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements
 
             RuntimePermissionForUser();
         }
+        startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -359,13 +357,6 @@ public class MainActivity extends AppCompatActivity implements
         void startTimer() {
             cTimer = new CountDownTimer(6000, 1000) {
                 public void onTick(long millisUntilFinished) {
-//                    change here the image
-                    try{
-//                        set here the view
-                    }
-                    catch (Exception e){
-                        Log.d("alert","error in main method");
-                    }
                     findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
                 }
                 public void onFinish() {
