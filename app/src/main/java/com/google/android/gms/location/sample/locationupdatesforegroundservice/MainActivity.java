@@ -31,7 +31,6 @@ import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import android.Manifest;
@@ -51,8 +50,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -97,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
-//    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
+    //    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
     FloatingWidgetShowService test = new FloatingWidgetShowService((Context) this);
 
     // Used in checking for runtime permissions.
@@ -121,12 +120,13 @@ public class MainActivity extends AppCompatActivity implements
     private ImageView vg;
 
     CountDownTimer cTimer = null;
-    Button button ;
+    Button button;
 
     Map<String, String> map = new HashMap<String, String>();
 
     public long lastUpdatedAt;
 
+    DatabaseHelper mydb;
 
 
     // Monitors the state of the connection to the service.
@@ -145,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements
             mBound = false;
         }
     };
+    private String TableName = "locationInfo";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,8 +153,8 @@ public class MainActivity extends AppCompatActivity implements
         myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
 
-        IntentFilter filter= new IntentFilter("com.codingflow.EXAMPLE_ACTION");
-        registerReceiver(test.reciever,filter);
+        IntentFilter filter = new IntentFilter("com.codingflow.EXAMPLE_ACTION");
+        registerReceiver(test.reciever, filter);
 
         // Check that the user hasn't revoked permissions by going to Settings.
         if (Utils.requestingLocationUpdates(this)) {
@@ -176,18 +177,20 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(View view) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    Log.d(TAG,"in if");
+                    Log.d(TAG, "in if");
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
                 } else if (Settings.canDrawOverlays(MainActivity.this)) {
-                    Log.d(TAG,"in else if");
+                    Log.d(TAG, "in else if");
                     startService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
                 } else {
-                    Log.d(TAG,"in else");
+                    Log.d(TAG, "in else");
                     RuntimePermissionForUser();
                     Toast.makeText(MainActivity.this, "System Alert Window Permission Is Required For Floating Widget.", Toast.LENGTH_LONG).show();
                 }
             }
         });
+        mydb = new DatabaseHelper(this);
+        mydb.readFileAndInsertData(this);
     }
 
     @Override
@@ -257,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements
      * Returns the current state of the permissions needed.
      */
     private boolean checkPermissions() {
-        return  PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
@@ -343,32 +346,29 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
-            Intent myIntent= new Intent("com.codingflow.EXAMPLE_ACTION");
+            Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
 
             if (location != null) {
-                if(hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())){
-                    myIntent.putExtra("valueForFloatingWidget","carInSpeedVanZone");
+                if (hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
+                    myIntent.putExtra("valueForFloatingWidget", "carInSpeedVanZone");
                     sendBroadcast(myIntent);
                     lastUpdatedAt = System.currentTimeMillis();
-                }
-                else{
-                    myIntent.putExtra("valueForFloatingWidget","null");
+                } else {
+                    myIntent.putExtra("valueForFloatingWidget", "null");
                     sendBroadcast(myIntent);
                     lastUpdatedAt = System.currentTimeMillis();
                 }
 
                 Timer timer = new Timer();
-                timer.schedule(new TimerTask()
-               {
-                   @Override
-                   public void run()
-                   {
-                       if(!hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())){
-                           myIntent.putExtra("valueForFloatingWidget","null");
-                           sendBroadcast(myIntent);
-                   }
-                   }
-               },0,2000);
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        if (!hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
+                            myIntent.putExtra("valueForFloatingWidget", "null");
+                            sendBroadcast(myIntent);
+                        }
+                    }
+                }, 0, 2000);
 
 //                Log.d(TAG,location.toString());
 //                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
@@ -425,25 +425,7 @@ public class MainActivity extends AppCompatActivity implements
         startActivityForResult(PermissionIntent, SYSTEM_ALERT_WINDOW_PERMISSION);
     }
 
-    public static String getUserCountry(Context context) {
-        try {
-            final TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            final String simCountry = tm.getSimCountryIso();
-            if (simCountry != null && simCountry.length() == 2) { // SIM country code is available
-                return simCountry.toLowerCase(Locale.US);
-            }
-            else if (tm.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) { // device is not 3G (would be unreliable)
-                String networkCountry = tm.getNetworkCountryIso();
-                if (networkCountry != null && networkCountry.length() == 2) { // network country code is available
-                    return networkCountry.toLowerCase(Locale.US);
-                }
-            }
-        }
-        catch (Exception e) { }
-        return null;
-    }
-
-    public boolean hasVariableBeenUpdatedInTheLastFewSeconds(long lastUpdatedAt, long currentTimeInMs){
-        return TimeUnit.MILLISECONDS.toSeconds(currentTimeInMs-lastUpdatedAt) <= 5;
+    public boolean hasVariableBeenUpdatedInTheLastFewSeconds(long lastUpdatedAt, long currentTimeInMs) {
+        return TimeUnit.MILLISECONDS.toSeconds(currentTimeInMs - lastUpdatedAt) <= 5;
     }
 }
