@@ -6,16 +6,16 @@ import re
 import numbers
 import requests
 # script that reads the locations from the csv, and then outputs all the polylines to a file
-with open('alllocations.csv', 'r') as file:
+with open('/home/alexander11/Documents/Projects/android-app/randomStuff/alllocations.csv', 'r') as file:
     reader = csv.reader(file)
     counties = ["carlow", "cavan","clare","cork","donegal","dublin","galway","kerry","kildare","kilkenny","laois","leitrim","limerick","longford","louth","mayo","meath","monaghan","offaly","roscommon","sligo","tipperary","waterford","westmeath","wexford","wicklow"]
     count = 0
-    file = open("locations.txt","w")
+    file = open("locations","w")
     for row in reader:
         try:
             # print (row)
             count+=1
-            # if count > 5:
+            # if count > 10:
             #     break
             myString = ','.join(str(x) for x in row)
             myList = re.findall("[-]?\d+\.\d{3,10}", myString)
@@ -24,8 +24,8 @@ with open('alllocations.csv', 'r') as file:
                 if county in myString.lower():
                     myCounty = county
             if myCounty != "null":
-                startingPoint = myList[0] +','+myList[1]
-                endingPoint = myList[2] +','+myList[3]
+                startingPoint = myList[0][0:7] +','+myList[1][0:7]
+                endingPoint = myList[2][0:7] +','+myList[3][0:7]
                 URL = "https://maps.googleapis.com/maps/api/directions/json?origin="+startingPoint+"&destination="+endingPoint+"&key=AIzaSyA0qW44Qlaqs4mDDEqXZdYGeG7pWh97yhw"
                 r = requests.get(url = URL) 
                 try:

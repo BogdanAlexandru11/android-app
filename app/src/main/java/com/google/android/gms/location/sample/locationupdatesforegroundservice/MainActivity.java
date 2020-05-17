@@ -319,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
             Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
 
             if (location != null) {
-                Log.d(TAG,location.toString());
+//                Log.d(TAG,location.toString());
                 Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
                 if (hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
                     myIntent.putExtra("valueForFloatingWidget", "carInSpeedVanZone");

@@ -145,6 +145,7 @@ public class LocationUpdatesService extends Service{
 
 
     private Geocoder geocoder;
+    boolean isInASpeedVanZone=false;
     /**
      * The current location.
      */
@@ -348,13 +349,13 @@ public class LocationUpdatesService extends Service{
     }
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
-        Log.i(TAG, "New location: " + location);
-        if(!isDistanceGreaterThanXMeters(location)){
-            Log.d(TAG,"position hasn't moved more than x meters");
-        }
-        else {
+        Log.i(TAG, "New location: " + location.getLatitude() + ", "+location.getLongitude() +" county: "+ getCounty(location.getLatitude(), location.getLongitude()));
+        isDistanceGreaterThanXMeters(location);
+//        if(!isDistanceGreaterThanXMeters(location)){
+//            Log.d(TAG,"position hasn't moved more than x meters");
+//        }
+//        else {
             Log.d(TAG,"position changed more than x meters");
-
             LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
             String county = getCounty(location.getLatitude(), location.getLongitude());
             for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
@@ -371,8 +372,7 @@ public class LocationUpdatesService extends Service{
                 }
             }
             mLocation = location;
-        }
-
+//        }
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager.notify(NOTIFICATION_ID, getNotification());
@@ -438,10 +438,14 @@ public class LocationUpdatesService extends Service{
     }
 
     public boolean isDistanceGreaterThanXMeters(Location newLocation) {
-        if (oldPosition.distanceTo(newLocation) > 25) {
+        if (oldPosition.distanceTo(newLocation) > 10) {
+            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             oldPosition = newLocation;
             return true;
         }
-        return false;
+        else{
+            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
+            return false;
+        }
     }
 }
