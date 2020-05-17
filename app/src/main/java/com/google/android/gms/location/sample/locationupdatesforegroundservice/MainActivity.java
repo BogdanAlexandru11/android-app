@@ -16,41 +16,36 @@
 
 package com.google.android.gms.location.sample.locationupdatesforegroundservice;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
-
-import android.Manifest;
-
-import android.content.pm.PackageManager;
-
-import android.net.Uri;
-
 import android.provider.Settings;
-import androidx.annotation.NonNull;
-
-import com.google.android.material.snackbar.Snackbar;
-import androidx.core.app.ActivityCompat;
-
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.IOException;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.material.snackbar.Snackbar;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -92,8 +87,7 @@ import java.util.concurrent.TimeUnit;
  * activity from the notification. The user can also remove location updates directly from the
  * notification. This dismisses the notification and stops the service.
  */
-public class MainActivity extends AppCompatActivity implements
-        SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     //    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
@@ -115,8 +109,6 @@ public class MainActivity extends AppCompatActivity implements
     private boolean mBound = false;
 
     // UI elements.
-    private Button mRequestLocationUpdatesButton;
-    private Button mRemoveLocationUpdatesButton;
     private ImageView vg;
 
     CountDownTimer cTimer = null;
@@ -136,6 +128,11 @@ public class MainActivity extends AppCompatActivity implements
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
             mService = binder.getService();
+                if (!checkPermissions()) {
+                    requestPermissions();
+                } else {
+                    mService.requestLocationUpdates();
+                }
             mBound = true;
         }
 
@@ -145,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements
             mBound = false;
         }
     };
-    private String TableName = "locationInfo";
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -196,32 +193,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStart() {
         super.onStart();
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
-
-        mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
-        mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
-
-        mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!checkPermissions()) {
-                    requestPermissions();
-                } else {
-                    mService.requestLocationUpdates();
-                }
-            }
-        });
-
-        mRemoveLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mService.removeLocationUpdates();
-            }
-        });
-
-        // Restore the state of the buttons when the activity (re)launches.
-        setButtonsState(Utils.requestingLocationUpdates(this));
+        PreferenceManager.getDefaultSharedPreferences(this);
 
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
@@ -251,8 +223,7 @@ public class MainActivity extends AppCompatActivity implements
             unbindService(mServiceConnection);
             mBound = false;
         }
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .unregisterOnSharedPreferenceChangeListener(this);
+        PreferenceManager.getDefaultSharedPreferences(this);
         super.onStop();
     }
 
@@ -315,7 +286,6 @@ public class MainActivity extends AppCompatActivity implements
                 mService.requestLocationUpdates();
             } else {
                 // Permission denied.
-                setButtonsState(false);
                 Snackbar.make(
                         findViewById(R.id.activity_main),
                         R.string.permission_denied_explanation,
@@ -349,6 +319,8 @@ public class MainActivity extends AppCompatActivity implements
             Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
 
             if (location != null) {
+                Log.d(TAG,location.toString());
+                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
                 if (hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
                     myIntent.putExtra("valueForFloatingWidget", "carInSpeedVanZone");
                     sendBroadcast(myIntent);
@@ -369,9 +341,6 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     }
                 }, 0, 2000);
-
-//                Log.d(TAG,location.toString());
-//                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
 
 //                cancelTimer();
 //                startTimer();
@@ -396,25 +365,6 @@ public class MainActivity extends AppCompatActivity implements
 //                cTimer.cancel();
 //        }
 
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        // Update the buttons state depending on whether location updates are being requested.
-        if (s.equals(Utils.KEY_REQUESTING_LOCATION_UPDATES)) {
-            setButtonsState(sharedPreferences.getBoolean(Utils.KEY_REQUESTING_LOCATION_UPDATES,
-                    false));
-        }
-    }
-
-    private void setButtonsState(boolean requestingLocationUpdates) {
-        if (requestingLocationUpdates) {
-            mRequestLocationUpdatesButton.setEnabled(false);
-            mRemoveLocationUpdatesButton.setEnabled(true);
-        } else {
-            mRequestLocationUpdatesButton.setEnabled(true);
-            mRemoveLocationUpdatesButton.setEnabled(false);
-        }
     }
 
     public void RuntimePermissionForUser() {

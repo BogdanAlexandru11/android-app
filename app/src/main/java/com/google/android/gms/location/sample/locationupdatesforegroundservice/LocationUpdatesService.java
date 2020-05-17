@@ -30,17 +30,16 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import android.util.Log;
-import android.widget.ImageView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -138,7 +137,10 @@ public class LocationUpdatesService extends Service{
 
     private Handler mServiceHandler;
 
-//    Map which stores all the locations
+    Location oldPosition;
+
+
+    //    Map which stores all the locations
     Map<String, ArrayList<List<LatLng>>> map = new HashMap<String, ArrayList<List<LatLng>>>();
 
 
@@ -200,6 +202,9 @@ public class LocationUpdatesService extends Service{
             stopSelf();
         }
         // Tells the system to not try to recreate the service after it has been killed.
+        oldPosition = new Location("");
+        oldPosition.setLatitude(53.3339);
+        oldPosition.setLongitude(-7.0095);
         return START_NOT_STICKY;
     }
 
@@ -306,14 +311,14 @@ public class LocationUpdatesService extends Service{
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
                         activityPendingIntent)
-                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
-                        servicePendingIntent)
-                .setContentText(text)
-                .setContentTitle(Utils.getLocationTitle(this))
-                .setOngoing(true)
+//                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
+//                        servicePendingIntent)
+                .setContentText("your location is being monitored")
+//                .setContentTitle(Utils.getLocationTitle(this))
+//                .setOngoing(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setTicker(text)
+//                .setTicker(text)
                 .setWhen(System.currentTimeMillis());
 
         // Set the Channel ID for Android O.
@@ -344,22 +349,29 @@ public class LocationUpdatesService extends Service{
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
         Log.i(TAG, "New location: " + location);
-        LatLng currentLocation = new LatLng( Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
-        String county = getCounty(location.getLatitude(), location.getLongitude());
-        for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
-            if(entry.getKey().equalsIgnoreCase(county)){
-                entry.getValue().stream().parallel().forEach(obj -> {
-                    boolean isonPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 100);
-                    if (isonPath) {
-                        Log.i(TAG,"This location is in a speedvan zone");
-                        Intent intent = new Intent(ACTION_BROADCAST);
-                        intent.putExtra(EXTRA_LOCATION, location);
-                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-                    }
-                });
-            }
+        if(!isDistanceGreaterThanXMeters(location)){
+            Log.d(TAG,"position hasn't moved more than x meters");
         }
-        mLocation = location;
+        else {
+            Log.d(TAG,"position changed more than x meters");
+
+            LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
+            String county = getCounty(location.getLatitude(), location.getLongitude());
+            for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(county)) {
+                    entry.getValue().stream().parallel().forEach(obj -> {
+                        boolean isonPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 100);
+                        if (isonPath) {
+                            Log.i(TAG, "This location is in a speedvan zone");
+                            Intent intent = new Intent(ACTION_BROADCAST);
+                            intent.putExtra(EXTRA_LOCATION, location);
+                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                        }
+                    });
+                }
+            }
+            mLocation = location;
+        }
 
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
@@ -395,6 +407,7 @@ public class LocationUpdatesService extends Service{
     public boolean serviceIsRunningInForeground(Context context) {
         ActivityManager manager = (ActivityManager) context.getSystemService(
                 Context.ACTIVITY_SERVICE);
+        assert manager != null;
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(
                 Integer.MAX_VALUE)) {
             if (getClass().getName().equals(service.service.getClassName())) {
@@ -422,5 +435,13 @@ public class LocationUpdatesService extends Service{
             Log.i(TAG,e.toString());
            return null;
         }
+    }
+
+    public boolean isDistanceGreaterThanXMeters(Location newLocation) {
+        if (oldPosition.distanceTo(newLocation) > 25) {
+            oldPosition = newLocation;
+            return true;
+        }
+        return false;
     }
 }

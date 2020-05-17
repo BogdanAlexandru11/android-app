@@ -45,9 +45,11 @@ public class FloatingWidgetShowService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-
+        Log.e(TAG,"unbinded");
         return null;
     }
+
+
 
     @Override
     public void onCreate() {
@@ -139,7 +141,7 @@ public class FloatingWidgetShowService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             myString = intent.getStringExtra("valueForFloatingWidget");
-            Log.d(TAG, myString);
+//            Log.d(TAG, myString);
             if(myString.equalsIgnoreCase("null")){
                 myString=null;
             }
