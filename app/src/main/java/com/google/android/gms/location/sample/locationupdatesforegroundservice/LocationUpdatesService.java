@@ -349,14 +349,11 @@ public class LocationUpdatesService extends Service{
     }
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
-        Log.i(TAG, "New location: " + location.getLatitude() + ", "+location.getLongitude() +" county: "+ getCounty(location.getLatitude(), location.getLongitude()));
-        isDistanceGreaterThanXMeters(location);
-//        if(!isDistanceGreaterThanXMeters(location)){
-//            Log.d(TAG,"position hasn't moved more than x meters");
-//        }
-//        else {
-            Log.d(TAG,"position changed more than x meters");
-            LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 1000d) / 1000d, Math.round(location.getLongitude() * 1000d) / 1000d);
+        Log.i(TAG, "New location: " + location.getLatitude() + ", " + location.getLongitude() + " county: " + getCounty(location.getLatitude(), location.getLongitude()));
+        Intent intent = new Intent(ACTION_BROADCAST);
+        if (!isDistanceGreaterThanXMeters(location)){
+            Log.d(TAG, "position changed more than x meters");
+            LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 10000d) / 10000d, Math.round(location.getLongitude() * 10000d) / 10000d);
             String county = getCounty(location.getLatitude(), location.getLongitude());
             for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(county)) {
@@ -364,14 +361,19 @@ public class LocationUpdatesService extends Service{
                         boolean isonPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 100);
                         if (isonPath) {
                             Log.i(TAG, "This location is in a speedvan zone");
-                            Intent intent = new Intent(ACTION_BROADCAST);
-                            intent.putExtra(EXTRA_LOCATION, location);
-                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                            isInASpeedVanZone=true;
                         }
                     });
                 }
             }
-            mLocation = location;
+        }
+        else{
+            isInASpeedVanZone=false;
+        }
+        intent.putExtra(EXTRA_LOCATION, isInASpeedVanZone+"");
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+        mLocation = location;
 //        }
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
@@ -423,22 +425,22 @@ public class LocationUpdatesService extends Service{
         List<Address> addresses;
         try{
             addresses = geocoder.getFromLocation(latitude, longitude, 1);
-            if (addresses.get(0).getCountryName() != "Ireland"){
+            if (addresses.get(0).getCountryName().equalsIgnoreCase("Ireland")){
                 return addresses.get(0).getAdminArea().substring(7).toLowerCase();
             }
             else{
+                Log.w(TAG,"Location not in Ireland ...skipping");
                 return null;
-
             }
         }
         catch (Exception e){
-            Log.i(TAG,e.toString());
+            Log.w(TAG,e.toString());
            return null;
         }
     }
 
     public boolean isDistanceGreaterThanXMeters(Location newLocation) {
-        if (oldPosition.distanceTo(newLocation) > 10) {
+        if (oldPosition.distanceTo(newLocation) > 25) {
             Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             oldPosition = newLocation;
             return true;

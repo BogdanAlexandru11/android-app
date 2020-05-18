@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -29,10 +28,8 @@ public class FloatingWidgetShowService extends Service {
     View floatingView, collapsedView;
     WindowManager.LayoutParams params ;
     Context context;
-    private static String myString;
-    CountDownTimer cTimer = null;
+    private static boolean isLocationInASpeedVanZone;
     private static final String TAG = FloatingWidgetShowService.class.getSimpleName();
-    private static boolean alreadyStarted=false;
 
 
     public Handler mHandler;
@@ -101,50 +98,27 @@ public class FloatingWidgetShowService extends Service {
             @Override
             public void run()
             {
+//                need the handler to update the ui
+//                TODO find replacement for this timer
                 handler.postDelayed(() -> {
-                    if(myString!=null && !alreadyStarted){
-                        cancelTimer();
-                        startTimer(floatingView);
+                    if(isLocationInASpeedVanZone){
+                        floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
+                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
+                    }
+                    else{
+                        floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
                     }
                 }, 0 );
             }
         }, 0, 1000);
     }
 
-    void startTimer(View view) {
-        cTimer = new CountDownTimer(6000, 1000) {
-            public void onTick(long millisUntilFinished) {
-            floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
-            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
-            alreadyStarted=true;
-
-            }
-            public void onFinish() {
-            floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
-            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
-            alreadyStarted=false;
-            }
-        };
-        cTimer.start();
-    }
-
-    //cancel timer
-    void cancelTimer() {
-        if(cTimer!=null){
-            floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
-            floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
-            cTimer.cancel();
-        }
-    }
-
     public BroadcastReceiver reciever = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
-            myString = intent.getStringExtra("valueForFloatingWidget");
-//            Log.d(TAG, myString);
-            if(myString.equalsIgnoreCase("null")){
-                myString=null;
-            }
+            isLocationInASpeedVanZone = Boolean.parseBoolean(intent.getStringExtra("valueForFloatingWidget"));
+            Log.d(TAG, "got this from mainClass "+ isLocationInASpeedVanZone);
         }
     };
 

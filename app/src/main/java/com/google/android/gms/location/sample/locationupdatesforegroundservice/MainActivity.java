@@ -108,15 +108,7 @@ public class MainActivity extends AppCompatActivity {
     // Tracks the bound state of the service.
     private boolean mBound = false;
 
-    // UI elements.
-    private ImageView vg;
-
-    CountDownTimer cTimer = null;
     Button button;
-
-    Map<String, String> map = new HashMap<String, String>();
-
-    public long lastUpdatedAt;
 
     DatabaseHelper mydb;
 
@@ -315,56 +307,24 @@ public class MainActivity extends AppCompatActivity {
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+//            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
-
-            if (location != null) {
-//                Log.d(TAG,location.toString());
-                Toast.makeText(MainActivity.this, "location is in a speedvan zone", Toast.LENGTH_SHORT).show();
-                if (hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
-                    myIntent.putExtra("valueForFloatingWidget", "carInSpeedVanZone");
-                    sendBroadcast(myIntent);
-                    lastUpdatedAt = System.currentTimeMillis();
-                } else {
-                    myIntent.putExtra("valueForFloatingWidget", "null");
-                    sendBroadcast(myIntent);
-                    lastUpdatedAt = System.currentTimeMillis();
-                }
-
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        if (!hasVariableBeenUpdatedInTheLastFewSeconds(lastUpdatedAt, System.currentTimeMillis())) {
-                            myIntent.putExtra("valueForFloatingWidget", "null");
-                            sendBroadcast(myIntent);
-                        }
-                    }
-                }, 0, 2000);
-
-//                cancelTimer();
-//                startTimer();
-            }
-        }
-
-//        void startTimer() {
-//            cTimer = new CountDownTimer(6000, 1000) {
-//                public void onTick(long millisUntilFinished) {
+            try{
+                String value = intent.getExtras().getString(LocationUpdatesService.EXTRA_LOCATION);
+                myIntent.putExtra("valueForFloatingWidget", value);
+                sendBroadcast(myIntent);
+//                Log.d(TAG,"myValue is "+ value);
+//                if(value){
 //                    findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
 //                }
-//                public void onFinish() {
+//                else {
 //                    findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
 //                }
-//            };
-//            cTimer.start();
-//        }
-//
-//        //cancel timer
-//        void cancelTimer() {
-//            if(cTimer!=null)
-//                cTimer.cancel();
-//        }
-
+            }
+            catch (Exception e){
+                Log.e(TAG,e.toString());
+            }
+        }
     }
 
     public void RuntimePermissionForUser() {
@@ -373,9 +333,5 @@ public class MainActivity extends AppCompatActivity {
                 Uri.parse("package:" + getPackageName()));
 
         startActivityForResult(PermissionIntent, SYSTEM_ALERT_WINDOW_PERMISSION);
-    }
-
-    public boolean hasVariableBeenUpdatedInTheLastFewSeconds(long lastUpdatedAt, long currentTimeInMs) {
-        return TimeUnit.MILLISECONDS.toSeconds(currentTimeInMs - lastUpdatedAt) <= 5;
     }
 }
