@@ -146,6 +146,8 @@ public class LocationUpdatesService extends Service{
 
     private Geocoder geocoder;
     boolean isInASpeedVanZone=false;
+
+    Intent onNewLocationIntent = new Intent(ACTION_BROADCAST);
     /**
      * The current location.
      */
@@ -350,7 +352,6 @@ public class LocationUpdatesService extends Service{
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
         Log.i(TAG, "New location: " + location.getLatitude() + ", " + location.getLongitude() + " county: " + getCounty(location.getLatitude(), location.getLongitude()));
-        Intent intent = new Intent(ACTION_BROADCAST);
         if (!isDistanceGreaterThanXMeters(location)){
             Log.d(TAG, "position changed more than x meters");
             LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 10000d) / 10000d, Math.round(location.getLongitude() * 10000d) / 10000d);
@@ -370,8 +371,8 @@ public class LocationUpdatesService extends Service{
         else{
             isInASpeedVanZone=false;
         }
-        intent.putExtra(EXTRA_LOCATION, isInASpeedVanZone+"");
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        onNewLocationIntent.putExtra(EXTRA_LOCATION, isInASpeedVanZone+"");
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(onNewLocationIntent);
 
         mLocation = location;
 //        }

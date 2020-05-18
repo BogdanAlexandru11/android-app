@@ -24,18 +24,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -45,12 +42,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.snackbar.Snackbar;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The only activity in this sample.
@@ -90,7 +81,6 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    //    FloatingWidgetShowService.ExampleBroadcastReceiver exampleBroadcastReceiver = new FloatingWidgetShowService.ExampleBroadcastReceiver();
     FloatingWidgetShowService test = new FloatingWidgetShowService((Context) this);
 
     // Used in checking for runtime permissions.
@@ -202,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         super.onPause();
     }
 
@@ -311,6 +301,7 @@ public class MainActivity extends AppCompatActivity {
             Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
             try{
                 String value = intent.getExtras().getString(LocationUpdatesService.EXTRA_LOCATION);
+                Log.d(TAG,"gotThisFromLocationClass "+value);
                 myIntent.putExtra("valueForFloatingWidget", value);
                 sendBroadcast(myIntent);
 //                Log.d(TAG,"myValue is "+ value);

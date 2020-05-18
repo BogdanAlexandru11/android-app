@@ -38,12 +38,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".FloatingWidgetShowService">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+<!--        <activity android:name=".FloatingWidgetShowService">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
 
         <!-- Foreground services in Q+ require type. -->
         <service
