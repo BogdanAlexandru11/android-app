@@ -125,6 +125,8 @@ public class FloatingWidgetShowService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+//        int id= android.os.Process.myPid();
+//        android.os.Process.killProcess(id);
         if (floatingView != null) windowManager.removeView(floatingView);
     }
 }

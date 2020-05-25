@@ -29,8 +29,8 @@ with open('/home/alexander11/Documents/Projects/android-app/randomStuff/alllocat
     for row in reader:
         try:
             count+=1
-            # if count > 5:
-            #     break
+            if count > 5:
+                break
             myString = ','.join(str(x) for x in row)
             myList = re.findall("[-]?\d+\.\d{3,10}", myString)
             myCounty = "null"

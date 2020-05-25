@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A bound and started service that is promoted to a foreground service when location updates have
@@ -256,6 +257,9 @@ public class LocationUpdatesService extends Service{
 
     @Override
     public void onDestroy() {
+
+//        int id= android.os.Process.myPid();
+//        android.os.Process.killProcess(id);
         mServiceHandler.removeCallbacksAndMessages(null);
     }
 
@@ -316,10 +320,10 @@ public class LocationUpdatesService extends Service{
                         activityPendingIntent)
 //                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
 //                        servicePendingIntent)
-                .setContentText("your location is being monitored")
+                .setContentText("Location is being monitored")
 //                .setContentTitle(Utils.getLocationTitle(this))
 //                .setOngoing(true)
-                .setPriority(Notification.PRIORITY_HIGH)
+                .setPriority(Notification.PRIORITY_MIN)
                 .setSmallIcon(R.mipmap.ic_launcher)
 //                .setTicker(text)
                 .setWhen(System.currentTimeMillis());
@@ -356,17 +360,16 @@ public class LocationUpdatesService extends Service{
             Log.d(TAG, "position changed more than x meters");
             LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 10000d) / 10000d, Math.round(location.getLongitude() * 10000d) / 10000d);
             String county = getCounty(location.getLatitude(), location.getLongitude());
-            for (Map.Entry<String, ArrayList<List<LatLng>>> entry : map.entrySet()) {
-                if (entry.getKey().equalsIgnoreCase(county)) {
-                    entry.getValue().stream().parallel().forEach(obj -> {
-                        boolean isonPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 100);
-                        if (isonPath) {
-                            Log.i(TAG, "This location is in a speedvan zone");
-                            isInASpeedVanZone=true;
-                        }
-                    });
+            ArrayList<List<LatLng>> trimmedDownLocations= getNearestPolylines(location,county);
+
+            Log.d(TAG, "Total locations : "+ Objects.requireNonNull(map.get(county)).size()+" trimmed locations: "+trimmedDownLocations.size());
+            trimmedDownLocations.stream().parallel().forEach(obj -> {
+                boolean isOnPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 25);
+                if (isOnPath) {
+                    Log.i(TAG, "This location is in a speedvan zone");
+                    isInASpeedVanZone=true;
                 }
-            }
+            });
         }
         else{
             isInASpeedVanZone=false;
@@ -378,7 +381,7 @@ public class LocationUpdatesService extends Service{
 //        }
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
-            mNotificationManager.notify(NOTIFICATION_ID, getNotification());
+//            mNotificationManager.notify(NOTIFICATION_ID, getNotification());
         }
     }
 
@@ -441,7 +444,7 @@ public class LocationUpdatesService extends Service{
     }
 
     public boolean isDistanceGreaterThanXMeters(Location newLocation) {
-        if (oldPosition.distanceTo(newLocation) > 25) {
+        if (oldPosition.distanceTo(newLocation) > 50) {
             Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             oldPosition = newLocation;
             return true;
@@ -450,5 +453,25 @@ public class LocationUpdatesService extends Service{
             Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             return false;
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public ArrayList<List<LatLng>> getNearestPolylines(Location location, String county){
+        ArrayList<List<LatLng>> countyList = map.get(county);
+        ArrayList<List<LatLng>> nearestPolylinesToCurrentLocationList = new ArrayList<>();
+        assert countyList != null;
+        countyList.stream().parallel().forEach(entryField ->{
+            Location firstPoint = new Location("");
+            firstPoint.setLatitude(entryField.get(0).latitude);
+            firstPoint.setLongitude(entryField.get(0).longitude);
+            Location lastPoint = new Location("");
+            lastPoint.setLatitude(entryField.get(entryField.size()-1).latitude);
+            lastPoint.setLongitude(entryField.get(entryField.size()-1).longitude);
+            double distanceBetweenTwoPoints = Math.round(firstPoint.distanceTo(lastPoint));
+            if(location.distanceTo(firstPoint) < distanceBetweenTwoPoints || location.distanceTo(lastPoint) < distanceBetweenTwoPoints){
+                nearestPolylinesToCurrentLocationList.add(entryField);
+            }
+        });
+        return nearestPolylinesToCurrentLocationList;
     }
 }
