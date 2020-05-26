@@ -134,7 +134,7 @@ public class LocationUpdatesService extends Service{
     private LocationCallback mLocationCallback;
 
 //    database handler object
-    DatabaseHelper mydb;
+    DatabaseHelper databaseHelper;
 
     private Handler mServiceHandler;
 
@@ -191,8 +191,11 @@ public class LocationUpdatesService extends Service{
             mNotificationManager.createNotificationChannel(mChannel);
         }
 //        Instantiate the object and retrieve all the data from the db
-        mydb = new DatabaseHelper(this);
-        map = mydb.getMapFromDatabase();
+        databaseHelper = new DatabaseHelper(this);
+        map = databaseHelper.getMapFromDatabase();
+
+//        Invokes the starting location
+        oldPosition = new Location("");
     }
 
     @Override
@@ -206,9 +209,6 @@ public class LocationUpdatesService extends Service{
             stopSelf();
         }
         // Tells the system to not try to recreate the service after it has been killed.
-        oldPosition = new Location("");
-        oldPosition.setLatitude(53.3339);
-        oldPosition.setLongitude(-7.0095);
         return START_NOT_STICKY;
     }
 
@@ -257,9 +257,6 @@ public class LocationUpdatesService extends Service{
 
     @Override
     public void onDestroy() {
-
-//        int id= android.os.Process.myPid();
-//        android.os.Process.killProcess(id);
         mServiceHandler.removeCallbacksAndMessages(null);
     }
 
@@ -318,14 +315,9 @@ public class LocationUpdatesService extends Service{
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
                         activityPendingIntent)
-//                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
-//                        servicePendingIntent)
                 .setContentText("Location is being monitored")
-//                .setContentTitle(Utils.getLocationTitle(this))
-//                .setOngoing(true)
                 .setPriority(Notification.PRIORITY_MIN)
                 .setSmallIcon(R.mipmap.ic_launcher)
-//                .setTicker(text)
                 .setWhen(System.currentTimeMillis());
 
         // Set the Channel ID for Android O.
@@ -344,6 +336,8 @@ public class LocationUpdatesService extends Service{
                         public void onComplete(@NonNull Task<Location> task) {
                             if (task.isSuccessful() && task.getResult() != null) {
                                 mLocation = task.getResult();
+                                oldPosition.setLongitude(mLocation.getLongitude());
+                                oldPosition.setLatitude(mLocation.getLatitude());
                             } else {
                                 Log.w(TAG, "Failed to get location.");
                             }

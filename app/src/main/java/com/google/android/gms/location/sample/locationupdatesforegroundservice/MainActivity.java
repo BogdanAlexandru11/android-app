@@ -209,6 +209,14 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
     }
 
+    @Override
+    public void onDestroy() {
+        Log.e(TAG,"Application stopped");
+        stopService(new Intent(MainActivity.this, FloatingWidgetShowService.class));
+        stopService(new Intent(MainActivity.this, LocationUpdatesService.class));
+        super.onDestroy();
+    }
+
     /**
      * Returns the current state of the permissions needed.
      */
