@@ -350,33 +350,33 @@ public class LocationUpdatesService extends Service{
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void onNewLocation(Location location) {
         Log.i(TAG, "New location: " + location.getLatitude() + ", " + location.getLongitude() + " county: " + getCounty(location.getLatitude(), location.getLongitude()));
-        if (!isDistanceGreaterThanXMeters(location)){
+        Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(location));
+        oldPosition = location;
             Log.d(TAG, "position changed more than x meters");
             LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 10000d) / 10000d, Math.round(location.getLongitude() * 10000d) / 10000d);
             String county = getCounty(location.getLatitude(), location.getLongitude());
+            if(county == null){
+                return;
+            }
             ArrayList<List<LatLng>> trimmedDownLocations= getNearestPolylines(location,county);
 
             Log.d(TAG, "Total locations : "+ Objects.requireNonNull(map.get(county)).size()+" trimmed locations: "+trimmedDownLocations.size());
             trimmedDownLocations.stream().parallel().forEach(obj -> {
-                boolean isOnPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 25);
+                boolean isOnPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 10);
                 if (isOnPath) {
                     Log.i(TAG, "This location is in a speedvan zone");
                     isInASpeedVanZone=true;
                 }
             });
-        }
-        else{
-            isInASpeedVanZone=false;
-        }
         onNewLocationIntent.putExtra(EXTRA_LOCATION, isInASpeedVanZone+"");
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(onNewLocationIntent);
 
         mLocation = location;
-//        }
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
 //            mNotificationManager.notify(NOTIFICATION_ID, getNotification());
         }
+        isInASpeedVanZone=false;
     }
 
     /**
@@ -438,13 +438,13 @@ public class LocationUpdatesService extends Service{
     }
 
     public boolean isDistanceGreaterThanXMeters(Location newLocation) {
-        if (oldPosition.distanceTo(newLocation) > 50) {
-            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
+        if (oldPosition.distanceTo(newLocation) > 5) {
+//            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             oldPosition = newLocation;
             return true;
         }
         else{
-            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
+//            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             return false;
         }
     }
