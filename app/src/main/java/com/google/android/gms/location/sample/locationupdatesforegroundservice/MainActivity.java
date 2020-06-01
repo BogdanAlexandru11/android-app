@@ -329,20 +329,12 @@ public class MainActivity extends AppCompatActivity {
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-//            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             Intent myIntent = new Intent("com.codingflow.EXAMPLE_ACTION");
             try{
                 String value = intent.getExtras().getString(LocationUpdatesService.EXTRA_LOCATION);
                 Log.d(TAG,"gotThisFromLocationClass "+value);
                 myIntent.putExtra("valueForFloatingWidget", value);
                 sendBroadcast(myIntent);
-//                Log.d(TAG,"myValue is "+ value);
-//                if(value){
-//                    findViewById(R.id.speedvan).setVisibility(View.VISIBLE);
-//                }
-//                else {
-//                    findViewById(R.id.speedvan).setVisibility(View.INVISIBLE);
-//                }
             }
             catch (Exception e){
                 Log.e(TAG,e.toString());

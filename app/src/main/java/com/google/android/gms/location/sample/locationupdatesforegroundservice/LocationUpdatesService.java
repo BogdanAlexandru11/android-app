@@ -372,10 +372,6 @@ public class LocationUpdatesService extends Service{
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(onNewLocationIntent);
 
         mLocation = location;
-        // Update notification content if running as a foreground service.
-        if (serviceIsRunningInForeground(this)) {
-//            mNotificationManager.notify(NOTIFICATION_ID, getNotification());
-        }
         isInASpeedVanZone=false;
     }
 

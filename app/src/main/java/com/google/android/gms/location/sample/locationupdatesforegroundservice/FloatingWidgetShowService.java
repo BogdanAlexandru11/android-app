@@ -18,9 +18,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 public class FloatingWidgetShowService extends Service {
 
@@ -30,7 +27,8 @@ public class FloatingWidgetShowService extends Service {
     Context context;
     private static boolean isLocationInASpeedVanZone;
     private static final String TAG = FloatingWidgetShowService.class.getSimpleName();
-
+    BooleanVariable booleanListener = new BooleanVariable();
+    Handler handler = new Handler(Looper.getMainLooper());
 
     public Handler mHandler;
     public FloatingWidgetShowService(Context context) {
@@ -91,27 +89,16 @@ public class FloatingWidgetShowService extends Service {
                 return false;
             }
         });
-        Handler handler = new Handler(Looper.getMainLooper());
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-//                need the handler to update the ui
-//                TODO find replacement for this timer
-                handler.postDelayed(() -> {
-                    if(isLocationInASpeedVanZone){
-                        floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
-                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
-                    }
-                    else{
-                        floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
-                        floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
-                    }
-                }, 0 );
+        BooleanVariable.addMyBooleanListener(() -> handler.postDelayed(() -> {
+            if(isLocationInASpeedVanZone){
+                floatingView.findViewById(R.id.van).setVisibility(View.VISIBLE);
+                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.INVISIBLE);
             }
-        }, 0, 1000);
+            else{
+                floatingView.findViewById(R.id.van).setVisibility(View.INVISIBLE);
+                floatingView.findViewById(R.id.Logo_Icon).setVisibility(View.VISIBLE);
+            }
+        }, 0 ));
     }
 
     public BroadcastReceiver reciever = new BroadcastReceiver(){
@@ -119,14 +106,13 @@ public class FloatingWidgetShowService extends Service {
         public void onReceive(Context context, Intent intent) {
             isLocationInASpeedVanZone = Boolean.parseBoolean(intent.getStringExtra("valueForFloatingWidget"));
             Log.d(TAG, "got this from mainClass "+ isLocationInASpeedVanZone);
+            booleanListener.setMyBoolean(isLocationInASpeedVanZone);
         }
     };
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        int id= android.os.Process.myPid();
-//        android.os.Process.killProcess(id);
         if (floatingView != null) windowManager.removeView(floatingView);
     }
 }
