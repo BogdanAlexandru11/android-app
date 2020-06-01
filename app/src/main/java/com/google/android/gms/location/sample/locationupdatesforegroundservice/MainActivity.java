@@ -172,6 +172,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+//        Close the application button
+        Button buttonClose = (Button) findViewById(R.id.buttonStop);
+        buttonClose.setOnClickListener(view -> finish());
+
         mydb = new DatabaseHelper(this);
         mydb.readFileAndInsertData(this);
 
