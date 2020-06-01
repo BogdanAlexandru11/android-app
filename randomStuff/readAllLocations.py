@@ -29,8 +29,8 @@ with open('/home/alexander11/Documents/Projects/android-app/randomStuff/alllocat
     for row in reader:
         try:
             count+=1
-            if count > 5:
-                break
+            # if count > 2:
+            #     break
             myString = ','.join(str(x) for x in row)
             myList = re.findall("[-]?\d+\.\d{3,10}", myString)
             myCounty = "null"
@@ -38,8 +38,8 @@ with open('/home/alexander11/Documents/Projects/android-app/randomStuff/alllocat
                 if county in myString.lower():
                     myCounty = county
             if myCounty != "null":
-                startingPoint = myList[0][0:7] +','+myList[1][0:7]
-                endingPoint = myList[2][0:7] +','+myList[3][0:7]
+                startingPoint = myList[0][0:8] +','+myList[1][0:8]
+                endingPoint = myList[2][0:8] +','+myList[3][0:8]
 
                 # added this as some speedVan locations start in one county and end in the other county, so they will be added to both counties
                 URLcountyStartingLocation="https://maps.googleapis.com/maps/api/geocode/json?address="+startingPoint+"&key=AIzaSyA0qW44Qlaqs4mDDEqXZdYGeG7pWh97yhw"

@@ -353,7 +353,7 @@ public class LocationUpdatesService extends Service{
         Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(location));
         oldPosition = location;
             Log.d(TAG, "position changed more than x meters");
-            LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 10000d) / 10000d, Math.round(location.getLongitude() * 10000d) / 10000d);
+            LatLng currentLocation = new LatLng(Math.round(location.getLatitude() * 100000d) / 100000d, Math.round(location.getLongitude() * 100000d) / 100000d);
             String county = getCounty(location.getLatitude(), location.getLongitude());
             if(county == null){
                 return;
@@ -362,7 +362,7 @@ public class LocationUpdatesService extends Service{
 
             Log.d(TAG, "Total locations : "+ Objects.requireNonNull(map.get(county)).size()+" trimmed locations: "+trimmedDownLocations.size());
             trimmedDownLocations.stream().parallel().forEach(obj -> {
-                boolean isOnPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 10);
+                boolean isOnPath = PolyUtil.isLocationOnPath(currentLocation, obj, true, 25);
                 if (isOnPath) {
                     Log.i(TAG, "This location is in a speedvan zone");
                     isInASpeedVanZone=true;
@@ -435,12 +435,12 @@ public class LocationUpdatesService extends Service{
 
     public boolean isDistanceGreaterThanXMeters(Location newLocation) {
         if (oldPosition.distanceTo(newLocation) > 5) {
-//            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
+            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             oldPosition = newLocation;
             return true;
         }
         else{
-//            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
+            Log.d(TAG,"distance between the last two points: " + oldPosition.distanceTo(newLocation));
             return false;
         }
     }
